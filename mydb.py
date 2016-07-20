@@ -59,8 +59,9 @@ class SimDataDB():
                 # call the simulation
                 ret = f(*args)
                 # push args into dbase
-                c.execute("INSERT INTO {0} VALUES (?,?,?)".format(table),
-                           [args[0],args[1],ret] )
+                c.execute("INSERT INTO {0} VALUES ({1})".format(
+                    table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table]])),
+                    [args+ret] )
                 # commit
                 self.conn.commit()
                 # behave like the original
