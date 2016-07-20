@@ -6,15 +6,13 @@ class SimDataDB():
         self.conn = sqlite3.connect(dbase)
         self.dbs = {}
         
-    def Add_Table(self, table, args):
+    def Add_Table(self, table, callsig):
         c = self.conn.cursor()
-        columns = [ '{0} {1}'.format(k[0],k[1]) for k in args ]
-        try:
-            c.execute('CREATE TABLE if not exists {0} ({1})'.format(table, ', '.join(columns)) )
-        except:
-            pass
+        columns = [ '{0} {1}'.format(k[0],k[1]) for k in callsig ]
+        c.execute('CREATE TABLE IF NOT EXISTS {0} ({1})'.format(table, ', '.join(columns)) )
+
         # save the argument list to this table
-        self.dbs[table] = args
+        self.dbs[table] = callsig
         self.conn.commit()
         
     def Decorate(self,table):
@@ -22,7 +20,12 @@ class SimDataDB():
             def wrapper(*args):
                 c = self.conn.cursor()
                 # check if arguments exist already
+                argcheck = " AND ".join([ "{0}={1}".format(argname[0],val)
+                             for argname,val in zip(self.dbs[table], args) ])
+                c.execute("SELECT EXISTS(SELECT 1 FROM {0} WHERE {1} LIMIT 1)".format(table, argcheck) )
                 
+                if c.fetchall()[0][0]==1:
+                    return None # TODO: act like a memoizer
                 # call the simulation
                 ret = f(*args)
                 # push args into dbase
@@ -45,16 +48,7 @@ class SimDataDB():
         self.conn.close()
 
 
-    
-def setupDB(dbase, table, args):
-    conn = sqlite3.connect(dbase)
-    c = conn.cursor()
-    columns = [ '{0} {1}'.format(k[0],k[1]) for k in args ]
-    c.execute('CREATE TABLE if not exists {0} ({1})'.format(table, ', '.join(columns)) )
-
-    conn.commit()
-    conn.close()
-    
+        
 def scripter(dbase, table):
     def wrap(f):
         def wrapper(*args):
@@ -77,11 +71,3 @@ def scripter(dbase, table):
         return wrapper
     return wrap
 
-def grab_all(dbase,table):
-    con = sqlite3.connect(dbase)
-
-def runner(S, args):
-    pass
-
-
-                  
