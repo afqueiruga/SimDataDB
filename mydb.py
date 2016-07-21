@@ -29,52 +29,66 @@ sqlite3.register_converter("array", convert_array)
 class SimDataDB():
     def __init__(self,dbase):
         self.dbase = dbase
-        self.conn = sqlite3.connect(dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+
         self.callsigs = {}
         self.retsigs = {}
         
     def Add_Table(self, table, callsig, retsig):
-        c = self.conn.cursor()
-        columns = [ '{0} {1}'.format(k[0],k[1]) for k in callsig + retsig ]
-        
-        c.execute('CREATE TABLE IF NOT EXISTS {0} ({1})'.format(table, ', '.join(columns)) )
-
-        # save the argument list to this table
-        self.callsigs[table] = callsig
-        self.retsigs[table] = retsig
-        self.conn.commit()
-        
+        conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+        with conn:
+            c = conn.cursor()
+            columns = [ '{0} {1}'.format(k[0],k[1]) for k in callsig + retsig ]
+            
+            c.execute('CREATE TABLE IF NOT EXISTS {0} ({1})'.format(table, ', '.join(columns)) )
+            
+            # save the argument list to this table
+            self.callsigs[table] = callsig
+            self.retsigs[table] = retsig
+        #conn.commit()
+        #conn.close()
     def Decorate(self,table):
         def wrap(f):
             def wrapper(*args):
-                c = self.conn.cursor()
+                conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+                c = conn.cursor()
                 # check if arguments exist already
-                argcheck = " AND ".join([ "{0}={1}".format(argname[0],val)
+                argcheck = " AND ".join([ "{0}='{1}'".format(argname[0],val)
                              for argname,val in zip(self.callsigs[table], args) ])
                 c.execute("SELECT {2} FROM {0} WHERE {1} LIMIT 1".format(
                     table, argcheck, " ".join([k[0] for k in self.retsigs[table]])) )
                 result = c.fetchone()
                 if result!=None:
+                    conn.close()
                     return result[0]
                 # call the simulation
                 ret = f(*args)
                 # push args into dbase
+                print "INSERT INTO {0} VALUES ({1})".format(
+                    table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table]]))
+                print conn
                 c.execute("INSERT INTO {0} VALUES ({1})".format(
                     table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table]])),
-                    [args+ret] )
+                    args+ret )
                 # commit
-                self.conn.commit()
+                conn.commit()
+                conn.close()
                 # behave like the original
                 return ret
             return wrapper
         return wrap
+
+    def Get_Connection(self):
+        return sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
     
     def Grab_All(self, table):
-        c = self.conn.cursor()
+        conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+        c = conn.cursor()
         c.execute("SELECT * FROM {0}".format(table))
         rows = c.fetchall()
+        conn.close()
         return rows
         
     def __del__(self):
-        self.conn.commit()
-        self.conn.close()
+        pass
+        #conn.commit()
+        #conn.close()
