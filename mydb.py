@@ -63,9 +63,6 @@ class SimDataDB():
                 # call the simulation
                 ret = f(*args)
                 # push args into dbase
-                print "INSERT INTO {0} VALUES ({1})".format(
-                    table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table]]))
-                print conn
                 c.execute("INSERT INTO {0} VALUES ({1})".format(
                     table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table]])),
                     args+ret )
@@ -87,7 +84,13 @@ class SimDataDB():
         rows = c.fetchall()
         conn.close()
         return rows
-        
+    
+    def Query(string):
+        c.execute(string)
+        res = c.fetchall()
+        res.sort()
+        return [ list(k) for k in res 
+    
     def __del__(self):
         pass
         #conn.commit()
