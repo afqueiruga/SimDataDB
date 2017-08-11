@@ -55,7 +55,7 @@ class SimDataDB():
                 argcheck = " AND ".join([ "{0}='{1}'".format(argname[0],val)
                              for argname,val in zip(self.callsigs[table], args) ])
                 c.execute("SELECT {2} FROM {0} WHERE {1} LIMIT 1".format(
-                    table, argcheck, " ".join([k[0] for k in self.retsigs[table]])) )
+                    table, argcheck, ", ".join([k[0] for k in self.retsigs[table]])) )
                 result = c.fetchone()
                 if result!=None:
                     conn.close()
@@ -82,15 +82,17 @@ class SimDataDB():
         c = conn.cursor()
         c.execute("SELECT * FROM {0}".format(table))
         rows = c.fetchall()
-        conn.close()
         return rows
     
-    def Query(string):
+    def Query(self,string):
+        conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+        c = conn.cursor()
         c.execute(string)
         res = c.fetchall()
         res.sort()
-        return [ list(k) for k in res 
-    
+        conn.close()
+        return [ list(k) for k in res  ]
+
     def __del__(self):
         pass
         #conn.commit()
