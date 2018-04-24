@@ -45,4 +45,8 @@ data = np.array(sdb.Query("select Dp,h,n,v from flowrun"))
 License
 --------
 
-Whatever you want. Cite this repository if you use it, but there is no gauruntee it actually works.
+Copyright (C) Alejandro Francisco Queiruga
+
+This library is released under version 3 of the GNU Lesser General Public License, as per LICENSE.txt.
+
+Please mention this repository if you use this library.
