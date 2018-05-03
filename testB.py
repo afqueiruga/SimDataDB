@@ -9,7 +9,7 @@ sdb.Add_Table("results1",
 
 @sdb.Decorate("results1")
 def fake_sim(x,y):
-    return np.array([x,2*y])
+    return np.array([x,2*y]),
 
 print fake_sim(1.0,1.5)
 print fake_sim(1.0,1.5)
