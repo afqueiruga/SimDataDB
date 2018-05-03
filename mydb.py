@@ -1,7 +1,7 @@
 import sqlite3
 import numpy as np
 import io
-
+import warnings
 ##
 # BEGIN CITATION:
 # http://stackoverflow.com/questions/18621513/python-insert-numpy-array-into-sqlite3-database
@@ -34,6 +34,10 @@ class SimDataDB():
         self.retsigs = {}
         
     def Add_Table(self, table, callsig, retsig):
+        " Deprecated; do not call directly anymore "
+        warnings.warn("Add the call signature using the decorator.", DeprecationWarning)
+        self._add_table(table,callsig,retsig)
+    def _add_table(self, table, callsig, retsig):
         conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
         with conn:
             c = conn.cursor()
@@ -46,7 +50,9 @@ class SimDataDB():
             self.retsigs[table] = retsig
         #conn.commit()
         #conn.close()
-    def Decorate(self,table):
+    def Decorate(self,table, callsig=None,retsig=None):
+        if not callsig is None and not retsig is None:
+            self._add_table(table,callsig,retsig)
         def wrap(f):
             def wrapper(*args):
                 conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
