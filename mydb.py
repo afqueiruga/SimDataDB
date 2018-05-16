@@ -46,20 +46,21 @@ class SimDataDB():
             self.retsigs[table] = retsig
         #conn.commit()
         #conn.close()
-    def Decorate(self,table):
+    def Decorate(self,table, memoize=True):
         def wrap(f):
             def wrapper(*args):
                 conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
                 c = conn.cursor()
                 # check if arguments exist already
-                argcheck = " AND ".join([ "{0}='{1}'".format(argname[0],val)
-                             for argname,val in zip(self.callsigs[table], args) ])
-                c.execute("SELECT {2} FROM {0} WHERE {1} LIMIT 1".format(
-                    table, argcheck, ", ".join([k[0] for k in self.retsigs[table]])) )
-                result = c.fetchone()
-                if result!=None:
-                    conn.close()
-                    return result[0]
+                if memoize:
+                    argcheck = " AND ".join([ "{0}='{1}'".format(argname[0],val)
+                                for argname,val in zip(self.callsigs[table], args) ])
+                    c.execute("SELECT {2} FROM {0} WHERE {1} LIMIT 1".format(
+                        table, argcheck, ", ".join([k[0] for k in self.retsigs[table]])) )
+                    result = c.fetchone()
+                    if result!=None:
+                        conn.close()
+                        return result[0]
                 # call the simulation
                 ret = f(*args)
                 # push args into dbase
