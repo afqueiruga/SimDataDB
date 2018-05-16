@@ -53,6 +53,7 @@ class SimDataDB():
                 c = conn.cursor()
                 # check if arguments exist already
                 if memoize:
+                    # TODO: check for floating point arguments
                     argcheck = " AND ".join([ "{0}='{1}'".format(argname[0],val)
                                 for argname,val in zip(self.callsigs[table], args) ])
                     c.execute("SELECT {2} FROM {0} WHERE {1} LIMIT 1".format(
@@ -90,7 +91,10 @@ class SimDataDB():
         c = conn.cursor()
         c.execute(string)
         res = c.fetchall()
-        res.sort()
+        try:
+            res.sort()
+        except ValueError:
+            print "Failed to sort. The keys were ", res
         conn.close()
         return [ list(k) for k in res  ]
 
