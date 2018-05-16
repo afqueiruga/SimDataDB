@@ -47,8 +47,6 @@ class SimDataDB():
             # save the argument list to this table
             self.callsigs[table] = callsig
             self.retsigs[table] = retsig
-        #conn.commit()
-        #conn.close()
 
     def Decorate(self,table, callsig=None,retsig=None, memoize=True):
         if not callsig is None and not retsig is None:
@@ -106,5 +104,3 @@ class SimDataDB():
 
     def __del__(self):
         pass
-        #conn.commit()
-        #conn.close()
