@@ -1,13 +1,9 @@
 from mydb import *
 
 
-sdb = SimDataDB("testB.db")
-sdb.Add_Table("results1",
-              ( ("x","FLOAT"), ("y","FLOAT") ),
-              ( ("z","array"), )
-              )
-
-@sdb.Decorate("results1")
+sdb = SimDataDB("testC.db")
+@sdb.Decorate("results1",( ("x","FLOAT"), ("y","FLOAT") ),
+              ( ("z","array"), ))
 def fake_sim(x,y):
     return np.array([x,2*y]),
 

@@ -19,30 +19,35 @@ Requirements
 Usage
 -------
 
-First, you initialize a SimDataDB object which will load the ".db" file. Then, add a new table with a name,
-and input call signature, and an output signature. Finally, decorate a function with the table name:
+First, you initialize a SimDataDB object which will load the ".db" file. Then decorate a function with a table name and a call and output signature:
 ```Python
 from SimDataDB import SimDataDB
 sdb = SimDataDB("./fractureplane.db")
-sdb.Add_Table("flowrun",
+@sdb.Decorate("flowrun",
               (("Dp","FLOAT"), ("h","FLOAT"), ("L","FLOAT"), ("n",'FLOAT') ),
-              ( ("v","FLOAT"),) )
-@sdb.Decorate("flowrun", memoize=False)
+              ( ("v","FLOAT"),),
+	          memoize=False)
 def solve_a_setup(Dp,h, L, n):
     RUN A SIMULATION
-	return v
+	return v,
 ```
-Then just call the function. Every time the function is called, we check to see if the arguments
-already exist in the table, and return the saved values if so. If the types are 'FLOAT', it checks
-based on an epsilon. Or, directly query the database with SQL at a later time from another file 
+Then just call the function. If the memoize flag is set to True, everytime the function is called, we check to see if the arguments already exist in the table. If there are values already there, they're fetched and returned instead of running the function again. If the types are 'FLOAT', it checks based on an epsilon (actually still a TODO!). The memoize flag is set to false when the simulations have random results to represent a sampling process.
+
+
+Alternatively, you directly query the database with SQL at a later time from another file 
 (without needing the original function definition):
 ```Python
 from SimDataDB import SimDataDB
 sdb = SimDataDB("./fractureplane.db")
 data = np.array(sdb.Query("select Dp,h,n,v from flowrun"))
 ```
+This is how I make plots for all of my papers!
 
 License
 --------
 
-Whatever you want. Cite this repository if you use it, but there is no gauruntee it actually works.
+Copyright (C) Alejandro Francisco Queiruga
+
+This library is released under version 3 of the GNU Lesser General Public License, as per LICENSE.txt.
+
+Please mention this repository if you use this library.
