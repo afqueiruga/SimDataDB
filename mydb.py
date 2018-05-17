@@ -42,7 +42,7 @@ class SimDataDB():
         conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
         with conn:
             c = conn.cursor()
-            columns = [ '{0} {1}'.format(k[0],k[1]) for k in callsig + retsig ]
+            columns = [ '{0} {1}'.format(k[0],k[1]) for k in callsig + retsig if k is not None]
             c.execute('CREATE TABLE IF NOT EXISTS {0} ({1})'.format(table, ', '.join(columns)) )
             # save the argument list to this table
             self.callsigs[table] = callsig
@@ -51,6 +51,9 @@ class SimDataDB():
     def Decorate(self,table, callsig=None,retsig=None, memoize=True):
         if not callsig is None and not retsig is None:
             self._add_table(table,callsig,retsig)
+        else:
+            callsig = self.callsigs[table]
+            retsig = self.retsig[table]
         def wrap(f):
             def wrapper(*args):
                 conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
@@ -59,7 +62,8 @@ class SimDataDB():
                 if memoize:
                     # TODO: check for floating point arguments
                     argcheck = " AND ".join([ "{0}='{1}'".format(argname[0],val)
-                                for argname,val in zip(self.callsigs[table], args) ])
+                                for argname,val in zip(self.callsigs[table], args)
+                                              if argname is not None])
                     c.execute("SELECT {2} FROM {0} WHERE {1} LIMIT 1".format(
                         table, argcheck, ", ".join([k[0] for k in self.retsigs[table]])) )
                     result = c.fetchone()
@@ -70,8 +74,9 @@ class SimDataDB():
                 ret = f(*args)
                 # push args into dbase
                 c.execute("INSERT INTO {0} VALUES ({1})".format(
-                    table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table]])),
-                    args+ret )
+                    table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table]
+                                   if _ is not None])),
+                          [ v for v,sig in zip(args,callsig) if sig is not None]+list(ret) )
                 # commit
                 conn.commit()
                 conn.close()
