@@ -6,7 +6,7 @@ def read(fname):
 
 setup(
     name = "SimDataDB",
-    version = "0.0.4",
+    version = "0.1",
     author = "Alejandro Francisco Queiruga",
     description = "",
     license = "GPL",
