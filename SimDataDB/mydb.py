@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sqlite3
 import numpy as np
 import io
@@ -103,7 +104,7 @@ class SimDataDB():
         try:
             res.sort()
         except ValueError:
-            print "Failed to sort. The keys were ", res
+            print("Failed to sort. The keys were ", res)
         conn.close()
         return [ list(k) for k in res  ]
 

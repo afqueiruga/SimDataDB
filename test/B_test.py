@@ -1,4 +1,5 @@
-from mydb import *
+from __future__ import print_function
+from SimDataDB import *
 
 
 sdb = SimDataDB("testB.db")
@@ -11,9 +12,9 @@ sdb.Add_Table("results1",
 def fake_sim(x,y):
     return np.array([x,2*y]),
 
-print fake_sim(1.0,1.5)
-print fake_sim(1.0,1.5)
-print fake_sim(1.0,2.5)
+print(fake_sim(1.0,1.5))
+print(fake_sim(1.0,1.5))
+print(fake_sim(1.0,2.5))
 
 rubs = sdb.Grab_All("results1")
-print rubs
+print(rubs)

@@ -1,4 +1,5 @@
-from mydb import *
+from __future__ import print_function
+from SimDataDB import *
 
 
 sdb = SimDataDB("testA.db")
@@ -16,4 +17,4 @@ fake_sim(1.0,1.5)
 fake_sim(1.0,2.5)
 
 rubs = sdb.Grab_All("results1")
-print rubs
+print(rubs)
