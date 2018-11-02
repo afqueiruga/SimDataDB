@@ -11,6 +11,7 @@ setup(
     description = "",
     license = "GPL",
     keywords = "",
+    test_suite="test",
     packages=['SimDataDB'],
     long_description=read('Readme.md'),
     classifiers=[],
