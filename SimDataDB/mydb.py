@@ -3,13 +3,15 @@ import sqlite3
 import numpy as np
 import io
 import warnings
+import time, datetime
+
 ##
 # BEGIN CITATION:
 # http://stackoverflow.com/questions/18621513/python-insert-numpy-array-into-sqlite3-database
 #
 def adapt_array(arr):
     """
-    http://stackoverflow.com/a/31312102/190597 (SoulNibbler)
+    citation: http://stackoverflow.com/a/31312102/190597 (SoulNibbler)
     """
     out = io.BytesIO()
     np.save(out, arr)
@@ -28,22 +30,24 @@ sqlite3.register_converter("array", convert_array)
 ##
 
 class SimDataDB():
+
     def __init__(self,dbase):
         self.dbase = dbase
-
+        self.meta_data = (('timestamp','STRING'),('run_time','FLOAT'))
         self.callsigs = {}
         self.retsigs = {}
-        
+
     def Add_Table(self, table, callsig, retsig):
         " Deprecated; do not call directly anymore "
         warnings.warn("Add the call signature using the decorator.", DeprecationWarning)
         self._add_table(table,callsig,retsig)
-        
+
     def _add_table(self, table, callsig, retsig):
         conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+
         with conn:
             c = conn.cursor()
-            columns = [ '{0} {1}'.format(k[0],k[1]) for k in callsig + retsig if k is not None]
+            columns = [ '{0} {1}'.format(k[0],k[1]) for k in callsig + retsig + self.meta_data if k is not None]
             c.execute('CREATE TABLE IF NOT EXISTS {0} ({1})'.format(table, ', '.join(columns)) )
             # save the argument list to this table
             self.callsigs[table] = callsig
@@ -72,12 +76,16 @@ class SimDataDB():
                         conn.close()
                         return result[0]
                 # call the simulation
+                start_timestamp = datetime.datetime.utcnow()
+                start_time = time.time()
                 ret = f(*args)
+                end_time = time.time()
+                run_time = end_time - start_time
                 # push args into dbase
                 c.execute("INSERT INTO {0} VALUES ({1})".format(
-                    table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table]
+                    table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table] + self.meta_data
                                    if _ is not None])),
-                          [ v for v,sig in zip(args,callsig) if sig is not None]+list(ret) )
+                          [ v for v,sig in zip(args,callsig) if sig is not None]+list(ret)+ [start_time,run_time] )
                 # commit
                 conn.commit()
                 conn.close()
@@ -88,14 +96,14 @@ class SimDataDB():
 
     def Get_Connection(self):
         return sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
-    
+
     def Grab_All(self, table):
         conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
         c = conn.cursor()
         c.execute("SELECT * FROM {0}".format(table))
         rows = c.fetchall()
         return rows
-    
+
     def Query(self,string):
         conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
         c = conn.cursor()
