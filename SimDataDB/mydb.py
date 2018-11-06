@@ -81,6 +81,13 @@ class SimDataDB():
                 ret = f(*args)
                 end_time = time.time()
                 run_time = end_time - start_time
+                # Sanitize possible dictionary args
+                try:
+                    # Convert the dict to a dictionary
+                    ret = [ret[nm] for nm,tp in self.retsigs[table]]
+                except TypeError:
+                    # It better be a list
+                    pass
                 # push args into dbase
                 c.execute("INSERT INTO {0} VALUES ({1})".format(
                     table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table] + self.meta_data
