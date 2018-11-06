@@ -84,15 +84,15 @@ class SimDataDB():
                 # Sanitize possible dictionary args
                 try:
                     # Convert the dict to a dictionary
-                    ret = [ret[nm] for nm,tp in self.retsigs[table]]
+                    flattened_ret = [ret[nm] for nm,tp in self.retsigs[table]]
                 except TypeError:
                     # It better be a list
-                    pass
+                    flattened_ret = ret
                 # push args into dbase
                 c.execute("INSERT INTO {0} VALUES ({1})".format(
                     table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table] + self.meta_data
                                    if _ is not None])),
-                          [ v for v,sig in zip(args,callsig) if sig is not None]+list(ret)+ [start_time,run_time] )
+                          [ v for v,sig in zip(args,callsig) if sig is not None]+list(flattened_ret)+ [start_time,run_time] )
                 # commit
                 conn.commit()
                 conn.close()
