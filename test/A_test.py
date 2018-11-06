@@ -26,3 +26,4 @@ class A_test(ut.TestCase):
 
         rubs = sdb.Grab_All("results1")
         print(rubs)
+        self.assertTrue(True)

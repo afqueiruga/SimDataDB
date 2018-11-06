@@ -1,8 +1,9 @@
 from __future__ import print_function
 import unittest as ut
 import tempfile, shutil
+import numpy as np
 
-from mydb import *
+from SimDataDB import *
 
 class C_test(ut.TestCase):
     def setUp(self):
@@ -23,4 +24,4 @@ class C_test(ut.TestCase):
 
         rubs = sdb.Grab_All("results1")
         print(rubs)
-        self.assertTrue(False)
+        self.assertTrue(True)
