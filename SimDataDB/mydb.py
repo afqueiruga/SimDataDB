@@ -92,7 +92,7 @@ class SimDataDB():
                 c.execute("INSERT INTO {0} VALUES ({1})".format(
                     table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table] + self.meta_data
                                    if _ is not None])),
-                          [ v for v,sig in zip(args,callsig) if sig is not None]+list(flattened_ret)+ [start_time,run_time] )
+                          [ v for v,sig in zip(args,callsig) if sig is not None]+list(flattened_ret)+ [start_timestamp,run_time] )
                 # commit
                 conn.commit()
                 conn.close()
