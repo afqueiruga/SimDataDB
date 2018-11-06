@@ -58,7 +58,7 @@ class SimDataDB():
             self._add_table(table,callsig,retsig)
         else:
             callsig = self.callsigs[table]
-            retsig = self.retsig[table]
+            retsig = self.retsigs[table]
         def wrap(f):
             def wrapper(*args):
                 conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
