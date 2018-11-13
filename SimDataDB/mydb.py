@@ -44,10 +44,11 @@ class SimDataDB():
 
     def _add_table(self, table, callsig, retsig):
         conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
-
+        callsig = tuple(callsig)
+        retsig = tuple(retsig)
         with conn:
             c = conn.cursor()
-            columns = [ '{0} {1}'.format(k[0],k[1]) for k in callsig + retsig + self.meta_data if k is not None]
+            columns = [ '{0} {1}'.format(k[0],k[1]) for k in callsig + retsig + self.meta_data if k is not None ]
             c.execute('CREATE TABLE IF NOT EXISTS {0} ({1})'.format(table, ', '.join(columns)) )
             # save the argument list to this table
             self.callsigs[table] = callsig
