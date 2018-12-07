@@ -54,7 +54,7 @@ class SimDataDB():
             self.callsigs[table] = callsig
             self.retsigs[table] = retsig
 
-    def Decorate(self,table, callsig=None,retsig=None, memoize=True):
+    def Decorate(self,table, callsig=None,retsig=None, memoize=True,dictreturn=False):
         if not callsig is None and not retsig is None:
             self._add_table(table,callsig,retsig)
         else:
@@ -75,7 +75,11 @@ class SimDataDB():
                     result = c.fetchone()
                     if result!=None:
                         conn.close()
-                        return result[0]
+                        # behave like the original
+                        if dictreturn:
+                            return { k:v for (k,tp),v in zip(self.retsigs[table],result) }
+                        else:
+                            return result
                 # call the simulation
                 start_timestamp = datetime.datetime.utcnow()
                 start_time = time.time()
