@@ -124,7 +124,7 @@ class SimDataDB():
         try:
             res.sort()
         except ValueError:
-            print("Failed to sort. The keys were ", res)
+            print("Failed to sort.")
         conn.close()
         return [ list(k) for k in res  ]
 
