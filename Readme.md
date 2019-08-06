@@ -19,6 +19,7 @@ Requirements
 Usage
 -------
 
+You can see an example usage in [PeriFlakes](https://github.com/afqueiruga/PeriFlakes/blob/master/PeriFlakes/batch.py).
 First, you initialize a SimDataDB object which will load the ".db" file. Then decorate a function with a table name and a call and output signature:
 ```Python
 from SimDataDB import SimDataDB
