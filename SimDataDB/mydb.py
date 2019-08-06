@@ -1,7 +1,7 @@
 from __future__ import print_function
 import sqlite3
 import numpy as np
-import io
+import io, os
 import warnings
 import time, datetime
 
@@ -33,6 +33,8 @@ class SimDataDB():
 
     def __init__(self,dbase):
         self.dbase = dbase
+        dbase_dir, _ = os.path.split(dbase)
+        os.makedirs(dbase_dir, exist_ok=True)
         self.meta_data = (('timestamp','STRING'),('run_time','FLOAT'))
         self.callsigs = {}
         self.retsigs = {}
