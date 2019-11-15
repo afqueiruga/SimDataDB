@@ -5,6 +5,7 @@ import numpy as np
 import io, os
 import warnings
 import time, datetime
+#import pymysql
 
 ##
 # BEGIN CITATION:
@@ -37,8 +38,10 @@ class SimDataDB():
         If dbase is a file, it will use sqlite3. If it is an url, it will use mysql.
 
         backend will override its decision making."""
-        self.backend = 'lite'
+        self.backend = backend
         self.dbase = dbase
+        # TODO detect backend
+        # TODO check for a connection and throw an error if we can't find it.
         if backend=='lite':
             dbase_dir, _ = os.path.split(dbase)
             os.makedirs(dbase_dir, exist_ok=True)
@@ -46,10 +49,20 @@ class SimDataDB():
             pass
         else:
             raise RuntimeError('Unsupported database driver')
-        self.meta_data = (('timestamp','STRING'),('run_time','FLOAT'))
+        self.meta_data = (('timestamp','VARCHAR(30)'),('runtime','FLOAT'))
         self.callsigs = {}
         self.retsigs = {}
 
+
+    def Get_Connection(self):
+        if self.backend=='lite':
+            return sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+        elif self.backend=='my':
+            return pymysql.connect(host=self.dbase, user='root', password='', db='db',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+                                       
+        
     def Add_Table(self, table, callsig, retsig):
         " Deprecated; do not call directly anymore "
         warnings.warn("Add the call signature using the decorator.", DeprecationWarning)
@@ -62,7 +75,9 @@ class SimDataDB():
         with conn:
             c = conn.cursor()
             columns = [ '{0} {1}'.format(k[0],k[1]) for k in callsig + retsig + self.meta_data if k is not None ]
-            c.execute('CREATE TABLE IF NOT EXISTS {0} ({1})'.format(table, ', '.join(columns)) )
+            cmd = 'CREATE TABLE IF NOT EXISTS {0} ( {1} );'.format(table, ', '.join(columns))
+            print(cmd)
+            c.execute(cmd)
             # save the argument list to this table
             self.callsigs[table] = callsig
             self.retsigs[table] = retsig
@@ -107,10 +122,19 @@ class SimDataDB():
                     # It better be a list
                     flattened_ret = ret
                 # push args into dbase
-                c.execute("INSERT INTO {0} VALUES ({1})".format(
-                    table,",".join(["?" for _ in self.callsigs[table] + self.retsigs[table] + self.meta_data
-                                   if _ is not None])),
-                          [ v for v,sig in zip(args,callsig) if sig is not None]+list(flattened_ret)+ [start_timestamp,run_time] )
+                values = [ v for v,sig in zip(args,callsig) if sig is not None] \
+                        + list(flattened_ret)+ [start_timestamp,run_time]
+                if self.backend=='lite':
+                    param_fmt = "?"
+                else:
+                    param_fmt = "%s"
+                query_fmt = ",".join([
+                    param_fmt.format(i) for i,_
+                    in enumerate(self.callsigs[table] + self.retsigs[table] + self.meta_data)
+                    if _ is not None])
+                # print(values)
+                # print(query_fmt)
+                c.execute("INSERT INTO {0} VALUES ({1})".format(table,query_fmt),values)
                 # commit
                 conn.commit()
                 conn.close()
@@ -118,9 +142,6 @@ class SimDataDB():
                 return ret
             return wrapper
         return wrap
-
-    def Get_Connection(self):
-        return sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
 
     def Grab_All(self, table):
         conn = self.Get_Connection()
