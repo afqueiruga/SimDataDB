@@ -1,5 +1,6 @@
 from __future__ import print_function
 import sqlite3
+import pymysql
 import numpy as np
 import io, os
 import warnings
@@ -31,10 +32,20 @@ sqlite3.register_converter("array", convert_array)
 
 class SimDataDB():
 
-    def __init__(self,dbase):
+    def __init__(self,dbase, backend='lite'):
+        """Constructs an object that references a database.
+        If dbase is a file, it will use sqlite3. If it is an url, it will use mysql.
+
+        backend will override its decision making."""
+        self.backend = 'lite'
         self.dbase = dbase
-        dbase_dir, _ = os.path.split(dbase)
-        os.makedirs(dbase_dir, exist_ok=True)
+        if backend=='lite':
+            dbase_dir, _ = os.path.split(dbase)
+            os.makedirs(dbase_dir, exist_ok=True)
+        elif backend=='my':
+            pass
+        else:
+            raise RuntimeError('Unsupported database driver')
         self.meta_data = (('timestamp','STRING'),('run_time','FLOAT'))
         self.callsigs = {}
         self.retsigs = {}
@@ -45,7 +56,7 @@ class SimDataDB():
         self._add_table(table,callsig,retsig)
 
     def _add_table(self, table, callsig, retsig):
-        conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+        conn = self.Get_Connection()
         callsig = tuple(callsig)
         retsig = tuple(retsig)
         with conn:
@@ -64,7 +75,7 @@ class SimDataDB():
             retsig = self.retsigs[table]
         def wrap(f):
             def wrapper(*args):
-                conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+                conn = self.Get_Connection()
                 c = conn.cursor()
                 # check if arguments exist already
                 if memoize:
@@ -112,14 +123,14 @@ class SimDataDB():
         return sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
 
     def Grab_All(self, table):
-        conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+        conn = self.Get_Connection()
         c = conn.cursor()
         c.execute("SELECT * FROM {0}".format(table))
         rows = c.fetchall()
         return rows
 
     def Query(self,string):
-        conn = sqlite3.connect(self.dbase, detect_types=sqlite3.PARSE_DECLTYPES)
+        conn = self.Get_Connection()
         c = conn.cursor()
         c.execute(string)
         res = c.fetchall()
