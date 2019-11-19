@@ -33,7 +33,7 @@ sqlite3.register_converter("array", convert_array)
 ##
 # TODO register with pymysql
 
-# TODO put pickles into blobs too
+# put pickles into blobs too
 def adapt_obj(obj):
 
     data = pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)
@@ -44,8 +44,8 @@ def convert_obj(text):
 sqlite3.register_adapter(object, adapt_obj)
 sqlite3.register_converter("pickle", convert_obj)
 
-class SimDataDB():
 
+class SimDataDB():
     def __init__(self,dbase, backend='lite'):
         """Constructs an object that references a database.
         If dbase is a file, it will use sqlite3. If it is an url, it will use mysql.
@@ -179,6 +179,8 @@ class SimDataDB():
             res.sort()
         except ValueError:
             print("Failed to sort.")
+        except TypeError:
+            print("Type doesn't support sorting")
         conn.close()
         return [ list(k) for k in res  ]
 
