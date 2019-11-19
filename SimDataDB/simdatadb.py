@@ -5,8 +5,10 @@ import numpy as np
 import io, os
 import warnings
 import time, datetime
-#import pymysql
-
+try:
+    import cPickle as pickle
+except:
+    import pickle
 ##
 # BEGIN CITATION:
 # http://stackoverflow.com/questions/18621513/python-insert-numpy-array-into-sqlite3-database
@@ -27,9 +29,20 @@ def convert_array(text):
 sqlite3.register_adapter(np.ndarray, adapt_array)
 # Converts TEXT to np.array when selecting
 sqlite3.register_converter("array", convert_array)
-#
 # end citation
 ##
+# TODO register with pymysql
+
+# TODO put pickles into blobs too
+def adapt_obj(obj):
+
+    data = pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)
+    return sqlite3.Binary(data)
+def convert_obj(text):
+    obj = pickle.loads(text)
+    return obj
+sqlite3.register_adapter(object, adapt_obj)
+sqlite3.register_converter("pickle", convert_obj)
 
 class SimDataDB():
 
@@ -116,11 +129,17 @@ class SimDataDB():
                 run_time = end_time - start_time
                 # Sanitize possible dictionary args
                 try:
-                    # Convert the dict to a dictionary
+                    # Convert the dict into a list
                     flattened_ret = [ret[nm] for nm,tp in self.retsigs[table]]
                 except TypeError:
                     # It better be a list
-                    flattened_ret = ret
+                    flattened_ret = list(ret)
+                # Perform our conversions
+                print(self.retsigs)
+                for i,(varname,vartype) in enumerate(self.retsigs[table]):
+                    if vartype=='pickle':
+                        print("Running adapter")
+                        flattened_ret[i] = adapt_obj(flattened_ret[i])
                 # push args into dbase
                 values = [ v for v,sig in zip(args,callsig) if sig is not None] \
                         + list(flattened_ret)+ [start_timestamp,run_time]
@@ -134,6 +153,7 @@ class SimDataDB():
                     if _ is not None])
                 # print(values)
                 # print(query_fmt)
+                print(values)
                 c.execute("INSERT INTO {0} VALUES ({1})".format(table,query_fmt),values)
                 # commit
                 conn.commit()
