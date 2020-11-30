@@ -50,3 +50,18 @@ def convert_obj(text):
 
 sqlite3.register_adapter(object, adapt_obj)
 sqlite3.register_converter("pickle", convert_obj)
+
+
+def type_to_sql_typestring(x):
+    if type(x) is str:
+        return x
+    elif x==float:
+        return 'FLOAT'
+    elif x==int:
+        return 'INT'
+    elif x==str:
+        return 'VARCHAR(30)'
+    elif x==np.ndarray:
+        return 'array'
+    else:
+        return 'pickle'

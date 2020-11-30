@@ -3,20 +3,18 @@ import pymysql
 import os
 import warnings
 import time, datetime
-try:
-    import cPickle as pickle
-except:
-    import pickle
 
 from .adapters import *
 
 class SimDataDB():
     def __init__(self, dbase, backend='lite'):
-        """Constructs an object that references a database.
+        """Depracted:Constructs an object that references a database.
 
         If dbase is a file, it will use sqlite3. If it is an url, it will use mysql.
 
-        The option backend will override its decision making."""
+        The option backend will override its decision making.
+
+        Deprecated: use the python3 annotation based version."""
         self.backend = backend
         self.dbase = dbase
         # TODO detect backend
