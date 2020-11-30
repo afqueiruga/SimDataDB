@@ -1,7 +1,6 @@
 import sqlite3
 import pymysql
-import numpy as np
-import io, os
+import os
 import warnings
 import time, datetime
 try:
@@ -9,52 +8,7 @@ try:
 except:
     import pickle
 
-
-##
-# BEGIN CITATION:
-# http://stackoverflow.com/questions/18621513/python-insert-numpy-array-into-sqlite3-database
-#
-def adapt_array(arr):
-    """
-    citation: http://stackoverflow.com/a/31312102/190597 (SoulNibbler)
-    """
-    out = io.BytesIO()
-    np.save(out, arr)
-    out.seek(0)
-    return sqlite3.Binary(out.read())
-
-
-def convert_array(text):
-    out = io.BytesIO(text)
-    out.seek(0)
-    return np.load(out)
-
-
-# Converts np.array to TEXT when inserting
-sqlite3.register_adapter(np.ndarray, adapt_array)
-# Converts TEXT to np.array when selecting
-sqlite3.register_converter("array", convert_array)
-
-# end citation
-##
-# TODO register with pymysql
-
-
-# put pickles into blobs too
-def adapt_obj(obj):
-
-    data = pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)
-    return sqlite3.Binary(data)
-
-
-def convert_obj(text):
-    obj = pickle.loads(text)
-    return obj
-
-
-sqlite3.register_adapter(object, adapt_obj)
-sqlite3.register_converter("pickle", convert_obj)
-
+from .adapters import *
 
 class SimDataDB():
     def __init__(self, dbase, backend='lite'):
