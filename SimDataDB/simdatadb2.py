@@ -44,11 +44,11 @@ class SimDataDB2():
         with self.GetConnection() as conn:
             c = conn.cursor()
             columns = [
-                '{0} {1}'.format(k[0], k[1])
-                for k in callsig + retsig + self.meta_data if k is not None
+                f'{name} {typename}'
+                for name, typename in callsig + retsig + self.meta_data
             ]
-            cmd = 'CREATE TABLE IF NOT EXISTS {0} ( {1} );'.format(
-                table, ', '.join(columns))
+            cols = ', '.join(columns)
+            cmd = f'CREATE TABLE IF NOT EXISTS {table} ( {cols} );'
             print(cmd)
             c.execute(cmd)
 
@@ -77,12 +77,14 @@ class SimDataDB2():
             if self.memoize:
                 # TODO: check for floating point arguments
                 argcheck = " AND ".join([
-                    "{0}='{1}'".format(argname[0], val)
+                    f"{argname[0]}='{val}'"
                     for argname, val in zip(callsig, args)
                     if argname is not None
                 ])
-                c.execute("SELECT {2} FROM {0} WHERE {1} LIMIT 1".format(
-                    self.table, argcheck, ", ".join([k[0] for k in retsig])))
+                list_of_vars = ", ".join([k[0] for k in retsig])
+                c.execute(
+                    f"SELECT {list_of_vars} FROM {self.table} WHERE {argcheck} LIMIT 1"
+                )
                 result = c.fetchone()
                 if result != None:
                     conn.close()
@@ -121,9 +123,7 @@ class SimDataDB2():
                 if _ is not None
             ])
 
-            c.execute(
-                "INSERT INTO {0} VALUES ({1})".format(self.table, query_fmt),
-                values)
+            c.execute(f"INSERT INTO {self.table} VALUES ({query_fmt})", values)
             conn.commit()
             conn.close()
             # behave like the original
@@ -134,7 +134,7 @@ class SimDataDB2():
     def GrabAll(self):
         with self.GetConnection() as conn:
             c = conn.cursor()
-            c.execute("SELECT * FROM {0}".format(self.table))
+            c.execute(f"SELECT * FROM {self.table}")
             rows = c.fetchall()
         return rows
 
