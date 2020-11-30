@@ -19,7 +19,36 @@ Requirements
 Usage
 -------
 
-You can see an example usage in [PeriFlakes](https://github.com/afqueiruga/PeriFlakes/blob/master/PeriFlakes/batch.py).
+The new wrapper `SimDataDB2` is more concise, and reads Python3 type
+annotations. The object itself is a decorator:
+
+```python
+from SimDataDB import SimDataDB2
+@SimDataDB2("./results.sqlite", "tablename")
+def my_calculation(x: float, y: float) -> Tuple[float]:
+    return (x + y,)  # note that it must be a tuple
+```
+
+Then this function can be called normally:
+
+```python
+# First time does the cacluation:
+result = my_calculation(4,1)
+# Second time with the same arguments checks the database instead
+# instead of running it!
+result = my_calculation(4,1)
+```
+
+In an analysis stage of your workflow, such as in a notebook, the same
+class can be used to perform queries with some helper functions:
+```python
+sdb = SimDataDB2("./results.sqlite", "tablename")
+entire_table = sdb.GrabAll()
+slice = sdb.Query("SELECT * FROM tablename WHERE x=4")
+```
+It isn't neccessary have the original function definition for later querying.
+
+You can see an older example usage in [PeriFlakes](https://github.com/afqueiruga/PeriFlakes/blob/master/PeriFlakes/batch.py).
 First, you initialize a SimDataDB object which will load the ".db" file. Then decorate a function with a table name and a call and output signature:
 ```Python
 from SimDataDB import SimDataDB
@@ -30,7 +59,7 @@ sdb = SimDataDB("./fractureplane.db")
 	          memoize=False)
 def solve_a_setup(Dp,h, L, n):
     RUN A SIMULATION
-	return v,
+    return v,
 ```
 Then just call the function. If the memoize flag is set to True, everytime the function is called, we check to see if the arguments already exist in the table. If there are values already there, they're fetched and returned instead of running the function again. If the types are 'FLOAT', it checks based on an epsilon (actually still a TODO!). The memoize flag is set to false when the simulations have random results to represent a sampling process.
 
