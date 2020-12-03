@@ -1,10 +1,15 @@
 from typing import Any, Tuple
 
 import sqlite3
-import pymysql
 import os
 import warnings
 import time, datetime
+
+try:
+    import pymysql
+    HAVE_PYMYSQL = True
+except:
+    HAVE_PYMYSQL = False
 
 from .adapters import *
 
@@ -21,7 +26,8 @@ class SimDataDB2():
             dbase_dir, _ = os.path.split(dbase)
             os.makedirs(dbase_dir, exist_ok=True)
         elif backend == 'my':
-            pass
+            if not HAVE_PYMYSQL:
+                raise RuntimeError('MySQL requires pymysql.')
         else:
             raise RuntimeError('Unsupported database driver')
         self.meta_data = (('timestamp', 'VARCHAR(30)'), ('runtime', 'FLOAT'))
@@ -31,6 +37,8 @@ class SimDataDB2():
             return sqlite3.connect(self.dbase,
                                    detect_types=sqlite3.PARSE_DECLTYPES)
         elif self.backend == 'my':
+            if not HAVE_PYMYSQL:
+                raise RuntimeError('MySQL requires pymysql.')
             return pymysql.connect(host=self.dbase,
                                    user='root',
                                    password='',
