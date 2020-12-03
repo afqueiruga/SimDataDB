@@ -10,7 +10,7 @@ from .adapters import *
 
 
 class SimDataDB2():
-    def __init__(self, dbase, table, memoize=True, backend='lite'):
+    def __init__(self, dbase, table=None, memoize=True, backend='lite'):
         self.backend = backend
         self.dbase = dbase
         self.table = table
@@ -54,6 +54,8 @@ class SimDataDB2():
 
     def __call__(self, f):
         """The decorator interface."""
+        if self.table is None:
+            self.table = f.__name__
         # TODO assert that the return type should be a Tuple
         annotations = f.__annotations__.copy()
         return_types = annotations['return'].__args__

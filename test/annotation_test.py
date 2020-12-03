@@ -73,5 +73,22 @@ class annotation_test(ut.TestCase):
         # Only two unique runs:
         self.assertEqual(len(results), 2)
 
+    def test_auto_tablename(self):
+        db_path = os.path.join(self.tmpdir, "testA.db")
+
+        @SimDataDB2(db_path)
+        def fake_sim(x: float, y: float) -> Tuple[float]:
+            return x + 2.0 * y,
+
+        self.assertAlmostEqual(fake_sim(1.0, 1.5)[0], 4.0)
+        # This one should be memoized:
+        self.assertAlmostEqual(fake_sim(1.0, 1.5)[0], 4.0)
+        self.assertAlmostEqual(fake_sim(1.0, 2.5)[0], 6.0)
+
+        sdb = SimDataDB2(db_path, "fake_sim")
+        results = sdb.GrabAll()
+        print(results)
+        self.assertEqual(len(results), 2)
+
 if __name__ == "__main__":
     ut.main()
