@@ -24,7 +24,7 @@ annotations. The object itself is a decorator:
 
 ```python
 from SimDataDB import SimDataDB2
-@SimDataDB2("./results.sqlite", "tablename")
+@SimDataDB2("./results.sqlite")
 def my_calculation(x: float, y: float) -> Tuple[float]:
     return (x + y,)  # note that it must be a tuple
 ```
@@ -34,19 +34,30 @@ Then this function can be called normally:
 ```python
 # First time does the cacluation:
 result = my_calculation(4,1)
-# Second time with the same arguments checks the database instead
-# instead of running it!
+# Second time with the same arguments checks the database instead instead of running it!
 result = my_calculation(4,1)
 ```
+
+This is similar to `functools.lru_cache`, except that the cache persists to
+disk using the database. If you do not want this behavior, e.g. if the
+function represents a random sample,
+`SimDataDB2` takes a `memoize=False` option with always runs the
+function and saves the result to the database. (However, I recommend
+adding a `seed` argument for reproducibility.)
 
 In an analysis stage of your workflow, such as in a notebook, the same
 class can be used to perform queries with some helper functions:
 ```python
-sdb = SimDataDB2("./results.sqlite", "tablename")
+sdb = SimDataDB2("./results.sqlite", "my_calculation")
 entire_table = sdb.GrabAll()
 slice = sdb.Query("SELECT * FROM tablename WHERE x=4")
 ```
-It isn't neccessary have the original function definition for later querying.
+It isn't neccessary have the original function definition for later
+querying. Extra `timestamp` and wall-clock `runtime` columns are automatically
+added to each row.
+
+My Use Cases
+----
 
 You can see an older example usage in [PeriFlakes](https://github.com/afqueiruga/PeriFlakes/blob/master/PeriFlakes/batch.py).
 First, you initialize a SimDataDB object which will load the ".db" file. Then decorate a function with a table name and a call and output signature:
@@ -58,7 +69,7 @@ sdb = SimDataDB("./fractureplane.db")
               ( ("v","FLOAT"),),
 	          memoize=False)
 def solve_a_setup(Dp,h, L, n):
-    RUN A SIMULATION
+    # RUN A SIMULATION
     return v,
 ```
 Then just call the function. If the memoize flag is set to True, everytime the function is called, we check to see if the arguments already exist in the table. If there are values already there, they're fetched and returned instead of running the function again. If the types are 'FLOAT', it checks based on an epsilon (actually still a TODO!). The memoize flag is set to false when the simulations have random results to represent a sampling process.
