@@ -1,10 +1,16 @@
 import sqlite3
-import pymysql
 import os
 import warnings
 import time, datetime
 
+try:
+    import pymysql
+    HAVE_PYMYSQL = True
+except:
+    HAVE_PYMYSQL = False
+
 from .adapters import *
+
 
 class SimDataDB():
     def __init__(self, dbase, backend='lite'):
